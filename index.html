@@ -1,49 +1,79 @@
-<script>
-    async function loadSheetData() {
-        const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQhTDvyzxTI5sMY51vJl4haUj29610K3aCkTxG2XhU_ocnD-awkHNbIfTu3BnXYY3Tyz1i2JUylYH78/pub?gid=0&single=true&output=csv"; // 네 CSV 링크
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유지보수 총괄표</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .details { display: none; background-color: #f9f9f9; }
+    </style>
+    <script>
+        async function loadSheetData() {
+            const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQhTDvyzxTI5sMY51vJl4haUj29610K3aCkTxG2XhU_ocnD-awkHNbIfTu3BnXYY3Tyz1i2JUylYH78/pub?gid=0&single=true&output=csv"; // Google Sheets CSV 링크
 
-        const response = await fetch(sheetURL);
-        const data = await response.text();
-        
-        const rows = data.split("\n").map(row => row.split(",")); // CSV 데이터 파싱
-        let tableHTML = "<table><tr>";
+            try {
+                console.log("🔄 데이터 불러오는 중...");
+                const response = await fetch(sheetURL);
+                if (!response.ok) throw new Error("📢 CSV 파일을 가져오는 데 실패했습니다.");
 
-        // 헤더 생성
-        rows[0].forEach(header => {
-            tableHTML += `<th>${header}</th>`;
-        });
-        tableHTML += "<th>더보기</th></tr>";
+                const data = await response.text();
+                console.log("✅ 데이터 불러오기 완료!");
+                console.log("📌 CSV 데이터:", data); // 데이터 확인용 로그
+                
+                const rows = data.split("\n").map(row => row.split(","));
+                if (rows.length < 2) throw new Error("❌ 데이터가 비어 있습니다!");
 
-        // 데이터 행 추가
-        for (let i = 1; i < rows.length; i++) {
-            let rowData = rows[i];
+                let tableHTML = "<table><tr>";
 
-            tableHTML += `<tr>`;
-            for (let j = 0; j < rowData.length - 1; j++) {
-                tableHTML += `<td>${rowData[j]}</td>`;
+                // 헤더 생성
+                rows[0].forEach(header => {
+                    tableHTML += `<th>${header}</th>`;
+                });
+                tableHTML += "<th>더보기</th></tr>";
+
+                // 데이터 행 추가
+                for (let i = 1; i < rows.length; i++) {
+                    let rowData = rows[i];
+
+                    tableHTML += `<tr>`;
+                    for (let j = 0; j < rowData.length - 1; j++) {
+                        tableHTML += `<td>${rowData[j]}</td>`;
+                    }
+                    tableHTML += `<td><button onclick="toggleDetails(${i})">상세보기</button></td></tr>`;
+
+                    // 상세 정보 추가 (숨겨진 div)
+                    let detailsData = rowData[rowData.length - 1].split(";"); // 상세 데이터를 `;`로 구분한다고 가정
+                    let detailsHTML = "<table border='1'>";
+                    detailsData.forEach(detail => {
+                        let [key, value] = detail.split(":"); // `키:값` 형태로 저장된 경우
+                        detailsHTML += `<tr><td>${key}</td><td>${value}</td></tr>`;
+                    });
+                    detailsHTML += "</table>";
+
+                    tableHTML += `<tr id="details-${i}" class="details"><td colspan="${rowData.length}">
+                        ${detailsHTML}
+                    </td></tr>`;
+                }
+
+                tableHTML += "</table>";
+                document.getElementById("sheetTable").innerHTML = tableHTML;
+            } catch (error) {
+                console.error(error.message);
+                document.getElementById("sheetTable").innerHTML = "<p>❌ 데이터를 불러올 수 없습니다.</p>";
             }
-            tableHTML += `<td><button onclick="toggleDetails(${i})">상세보기</button></td></tr>`;
-
-            // 상세 정보 추가 (숨겨진 div)
-            let detailsData = rowData[rowData.length - 1].split(";"); // 상세 데이터를 `;`로 구분한다고 가정
-            let detailsHTML = "<table border='1'>";
-            detailsData.forEach(detail => {
-                let [key, value] = detail.split(":"); // `키:값` 형태로 저장된 경우
-                detailsHTML += `<tr><td>${key}</td><td>${value}</td></tr>`;
-            });
-            detailsHTML += "</table>";
-
-            tableHTML += `<tr id="details-${i}" class="details"><td colspan="${rowData.length}">
-                ${detailsHTML}
-            </td></tr>`;
         }
 
-        tableHTML += "</table>";
-        document.getElementById("sheetTable").innerHTML = tableHTML;
-    }
-
-    function toggleDetails(index) {
-        let detailsRow = document.getElementById(`details-${index}`);
-        detailsRow.style.display = (detailsRow.style.display === "none" || detailsRow.style.display === "") ? "table-row" : "none";
-    }
-</script>
+        function toggleDetails(index) {
+            let detailsRow = document.getElementById(`details-${index}`);
+            detailsRow.style.display = (detailsRow.style.display === "none" || detailsRow.style.display === "") ? "table-row" : "none";
+        }
+    </script>
+</head>
+<body onload="loadSheetData()">
+    <h1>유지보수 총괄표</h1>
+    <div id="sheetTable">Loading...</div>
+</body>
+</html>
