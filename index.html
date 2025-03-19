@@ -8,12 +8,13 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: auto; /* 자동 레이아웃 */
+            table-layout: auto; /* 가변 레이아웃 */
         }
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: center;
+            vertical-align: middle; /* 셀 높이 정렬 */
             word-wrap: break-word;
             white-space: normal;
         }
@@ -42,7 +43,7 @@
                 console.log("✅ 데이터 불러오기 완료!");
                 console.log("📌 CSV 데이터:", data);
 
-                // 🔹 CSV 데이터 파싱 (쉼표 문제 해결)
+                // 🔹 CSV 데이터 파싱 (쉼표 문제 및 큰따옴표 처리)
                 const rows = data.split("\n").map(row => row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g));
                 if (rows.length < 2) throw new Error("❌ 데이터가 비어 있습니다!");
 
