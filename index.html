@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>유지보수 총괄표</title>
     <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; word-wrap: break-word; white-space: normal; }
         th { background-color: #f4f4f4; }
         .details { display: none; background-color: #f9f9f9; }
+        button { padding: 5px 10px; cursor: pointer; }
     </style>
     <script>
         async function loadSheetData() {
@@ -22,21 +23,21 @@
                 const data = await response.text();
                 console.log("✅ 데이터 불러오기 완료!");
                 console.log("📌 CSV 데이터:", data); // 데이터 확인용 로그
-                
-                const rows = data.split("\n").map(row => row.split(","));
+
+                const rows = data.split("\n").map(row => row.split(",")); // CSV 데이터 파싱
                 if (rows.length < 2) throw new Error("❌ 데이터가 비어 있습니다!");
 
                 let tableHTML = "<table><tr>";
 
-                // 헤더 생성
+                // 🔹 **헤더 생성**
                 rows[0].forEach(header => {
                     tableHTML += `<th>${header}</th>`;
                 });
                 tableHTML += "<th>더보기</th></tr>";
 
-                // 데이터 행 추가
+                // 🔹 **데이터 행 추가**
                 for (let i = 1; i < rows.length; i++) {
-                    let rowData = rows[i];
+                    let rowData = rows[i].map(cell => cell.replace(/"/g, "").trim()); // 큰따옴표 제거 및 공백 제거
 
                     tableHTML += `<tr>`;
                     for (let j = 0; j < rowData.length - 1; j++) {
@@ -44,9 +45,9 @@
                     }
                     tableHTML += `<td><button onclick="toggleDetails(${i})">상세보기</button></td></tr>`;
 
-                    // 상세 정보 추가 (숨겨진 div)
+                    // 🔹 **상세 정보 추가 (숨겨진 div)**
                     let detailsData = rowData[rowData.length - 1].split(";"); // 상세 데이터를 `;`로 구분한다고 가정
-                    let detailsHTML = "<table border='1'>";
+                    let detailsHTML = "<table border='1' width='100%'>";
                     detailsData.forEach(detail => {
                         let [key, value] = detail.split(":"); // `키:값` 형태로 저장된 경우
                         detailsHTML += `<tr><td>${key}</td><td>${value}</td></tr>`;
